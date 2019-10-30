@@ -1,376 +1,175 @@
-(function(global) {
-  var canvas, gl, program, program2;
-  glUtils.SL.init({ callback: function() { main(); } });
+(function() {
+  // ambil elemen canvas dan cek apakah webGL nya hidup
+  var canvas = document.getElementById("glcanvas");
+  var gl = glUtils.checkWebGL(canvas);
+  var program,program2;
+
+  glUtils.SL.init({ callback:function() { main(); } });
 
   function main() {
+      // Register Callbacks
+      window.addEventListener('resize', resizer);
+
+      // Get canvas element and check if WebGL enabled
+      canvas = document.getElementById("glcanvas");
+      gl = glUtils.checkWebGL(canvas);
   
-    window.addEventListener('resize', resizer);
-    canvas = document.getElementById("glcanvas");
-    gl = glUtils.checkWebGL(canvas);
+      // Initialize the shaders and program
+     var vertexShader = glUtils.getShader(gl, gl.VERTEX_SHADER, glUtils.SL.Shaders.v1.vertex),
+      vertexShader2 = glUtils.getShader(gl, gl.VERTEX_SHADER, glUtils.SL.Shaders.v2.vertex),
+      fragmentShader = glUtils.getShader(gl, gl.FRAGMENT_SHADER, glUtils.SL.Shaders.v1.fragment);
+     
+      //huruf
+      program = glUtils.createProgram(gl, vertexShader, fragmentShader);
+      var thetaLoc = gl.getUniformLocation(program, 'theta'); 
+      var transLoc = gl.getUniformLocation(program, 'trans');
+      var thetaA = [10, 20, 0];
+      var trans = [0, 0, 0]; 
+      var X = 0.0080;
+      var Y = 0.0090;
+      var Z = 0.0130;
 
-    var vertexShader = glUtils.getShader(gl, gl.VERTEX_SHADER, glUtils.SL.Shaders.v1.vertex);
-    var vertexShader2 = glUtils.getShader(gl, gl.VERTEX_SHADER, glUtils.SL.Shaders.v2.vertex);
-    var fragmentShader = glUtils.getShader(gl, gl.FRAGMENT_SHADER, glUtils.SL.Shaders.v1.fragment);
-    var fragmentShader2 = glUtils.getShader(gl, gl.FRAGMENT_SHADER, glUtils.SL.Shaders.v2.fragment);
-    program = glUtils.createProgram(gl, vertexShader, fragmentShader);
-    program2 = glUtils.createProgram(gl, vertexShader2, fragmentShader2);
+      //cube
+      program2 = glUtils.createProgram(gl, vertexShader2, fragmentShader);
+      var thetaLocCube = gl.getUniformLocation(program2, 'theta');
+      var thetaCube;
 
-    resizer();
-  }
+     
 
-    function draw() {
-    
+      function render(){
+        gl.clearColor(0, 0, 0, 1);
+        gl.colorMask(true,true,true,true);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-    var thetaLocation = gl.getUniformLocation(program, 'theta');
-    var theta = 0.0;
+        gl.useProgram(program);
+        drawtriangle();
+        gl.drawArrays(gl.TRIANGLE_FAN,0,9);
 
-    var scaleXLocation = gl.getUniformLocation(program2, 'scaleX');
-    var scaleX = 1.0;
-    var melebar = 1;
+        gl.useProgram(program2);
+        thetaCube = [10, 10, 0];
+        gl.uniform3fv(thetaLocCube, thetaCube);
+        drawcube();
+        gl.drawArrays(gl.LINES,0,24);
 
-    function render() {
-      // Bersihkan layar jadi hitam
-      gl.clearColor(0.0, 0.0, 0.0, 1.0);
-      gl.colorMask(true, true, true, true);
-      // Bersihkan buffernya canvas
-      gl.clear(gl.COLOR_BUFFER_BIT);
-
-      gl.useProgram(program);
-      theta += 0.0103;
-      gl.uniform1f(thetaLocation, theta);
-      n = initBuffers(gl);
-      if(n < 0) {
-        console.log('Gagal untuk set posisi dari vertex');
-        return;
+        requestAnimationFrame(render);
       }
-      gl.drawArrays(gl.LINE_STRIP, 0, n);
-      var n2 = initBuffersCircle(gl, -0.5, -0.14, 0.2, 0.4);
-      gl.drawArrays(gl.LINE_STRIP, 0, n2);
+     
 
-      gl.useProgram(program2);
-      if (scaleX >= 1) melebar = -1;
-      else if (scaleX <= -1) melebar = 1;
-      scaleX += 0.0103 * melebar;
-      gl.uniform1f(scaleXLocation, scaleX);
+      function drawcube(){
+          var cubeVertices = [
+            //BAWAH
+              -0.3,  -0.8,  0.7,      255, 255, 255,          
+              0.4,  -0.8,  0.7,       255, 255, 255,          
+              0.4,  -0.8,  0.7,       255, 255, 255,          
+              0.4,  -0.8,  -0.6,      255, 255, 255,          
+              0.4,  -0.8,  -0.6,      255, 255, 255,          
+              -0.3,  -0.8,  -0.6,     255, 255, 255,          
+              -0.3,  -0.8,  -0.6,     255, 255, 255,          
+              -0.3,  -0.8,  0.7,      255, 255, 255,          
+              //ATAS
+              -0.3,  0.6,  0.7,       255,255, 255,          
+              0.4,  0.6,  0.7,        255,255, 255,       
+              0.4,  0.6,  0.7,        255,255, 255,         
+              0.4,  0.6,  -0.6,      255,255, 255,          
+              0.4,  0.6,  -0.6,       255,255, 255,          
+              -0.3,  0.6,  -0.6,      255,255, 255,          
+              -0.3,  0.6,  -0.6,      255,255, 255,          
+              -0.3,  0.6,  0.7,       255,255, 255,          
+              //BELAKANG
+              -0.3,  -0.8,  0.7,      255,255, 255,            
+              -0.3,  0.6,  0.7,       255,255, 255,           
+              0.4,  -0.8,  0.7,      255,255, 255,            
+              0.4,  0.6,  0.7,        255,255, 255,            
+              //DEPAN
+              0.4,  -0.8,  -0.6,      255,255, 255,            
+              0.4,  0.6,  -0.6,       255,255, 255,           
+              -0.3,  -0.8,  -0.6,     255,255, 255,            
+              -0.3,  0.6,  -0.6,      255,255, 255             
+        ];
 
-      var n3 = initBuffers2(gl);
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, n3);
-       var n5 = initBuffers3(gl);
-      gl.drawArrays(gl.TRIANGLE_FAN, 0, n5);
+        var cubeVertexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, cubeVertexBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(cubeVertices), gl.STATIC_DRAW);
 
-      var n4 = initBuffersCircle(gl, +0.5, -0.14, 0.18, 0.36);
-      gl.drawArrays(gl.LINE_STRIP, 0, n4);
+        var vPosition = gl.getAttribLocation(program2,'vPosition');
+        var vColor = gl.getAttribLocation(program2,'vColor');
+        gl.vertexAttribPointer(
+          vPosition,                          // variable yang memegang posisi atrbute di shader
+          3,                                  // jumlah elemen per attribute
+          gl.FLOAT,                           // tipe data attribut
+          gl.FALSE,                           // default
+          6 * Float32Array.BYTES_PER_ELEMENT, // ukuran byte tiap vertex
+          0                                   // offset dari posisi elemen di array
+        );
+        gl.vertexAttribPointer(vColor, 3, gl.FLOAT, gl.FALSE,
+          6 * Float32Array.BYTES_PER_ELEMENT, 3 * Float32Array.BYTES_PER_ELEMENT);
 
-      requestAnimationFrame(render);
-    }
-    render();
+        gl.enableVertexAttribArray(vPosition);
+        gl.enableVertexAttribArray(vColor);
+      }
 
-  }
+      function drawtriangle(){
+        var triangleVertices = [
+          -0.1, 0.5, 2.0,1.0,0.0,
+          -0.1,-0.5, 0.7,1.0,0.6,
+          0.1, -0.5, 0.3,1.0,0.6,
+          0.1, 0.5, 1.0,1.0,0.0,
+          0.4, 0.5, 0.4,0.0,1.0,
+          0.4, 0.8, 1.0,1.0,0.5,
+          -0.4, 0.8, 0.2,0.0,1.0,
+          -0.4, 0.5, 1.0, 0.2, 0.5,
+          -0.1, 0.5, 0.3, 0.5, 0.7
+        ];
+        var triangleVertexBufferObject = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexBufferObject);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(triangleVertices), gl.STATIC_DRAW);
 
-  function initBuffersCircle(gl, x, y, x2, y2) {
-    var circle = []
-    var vertCount = 2;
-    var vertexBuffer = gl.createBuffer();
-    if(!vertexBuffer) {
-      console.log('Gagal membuat objek buffer');
-      return -1;
-    }
-    for(var i = 0; i <= 360; i += 1) {
-      j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.2 + x,
-        Math.cos(j) * 0.4 + y
-      ]
+        var vPosition = gl.getAttribLocation(program,'vPosition');
+        var vColor = gl.getAttribLocation(program,'vColor');
+        gl.vertexAttribPointer(
+          vPosition,                          
+          2,                                  // jumlah elemen per attribute
+          gl.FLOAT,                           // tipe data attribut
+          gl.FALSE,                           // default
+          5 * Float32Array.BYTES_PER_ELEMENT, // ukuran byte tiap vertex
+          0                                   // offset dari posisi elemen di array
+        );
+        gl.vertexAttribPointer(vColor, 3, gl.FLOAT, gl.FALSE,
+          5 * Float32Array.BYTES_PER_ELEMENT, 2 * Float32Array.BYTES_PER_ELEMENT);
 
-      var vert2 = [
-        Math.sin(j) * x2 + x,
-        Math.cos(j) * y2 + y
-      ]
-      circle = circle.concat(vert1);
-      circle = circle.concat(vert2);
-    }
-    var n2 = circle.length / vertCount;
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(circle), gl.STATIC_DRAW);
+          if(trans[0] >= 0.4*0.8 || trans[0] <= -0.3*0.8 ){
+              X *= -1;
+            }
+            trans[0] += X;
+      
+            if(trans[1] >= 0.6*0.8 || trans[1] <= -0.8*0.8 ){
+              Y *= -1;
+            }
+            trans[1] += Y;
+      
+            if(trans[2] >= 0.7*0.8 || trans[2] <= -0.6*0.8){
+              Z *= -1;
+            }
+            trans[2] += Z;
+      
+            gl.uniform3fv(transLoc, trans);
 
-    var aPosition = gl.getAttribLocation(program, 'aPosition');
-    if(aPosition < 0) {
-      console.log('Gagal mendapatkan lokasi storage dari aPosition');
-      return -1;
-    }
-
-    gl.vertexAttribPointer(aPosition, vertCount, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aPosition);
-
-    return n2;
-  }
-
-  function initBuffers2() {
-    var vertices = [];
-    var vertCount = 2;
-    var vertexBuffer = gl.createBuffer();
-    if(!vertexBuffer) {
-      console.log('Gagal membuat objek buffer');
-      return -1;
-    }
-
-    var vert5 = [
-      -0.66 + 1.07, -0.27
-    ]
-
-    vertices = vertices.concat(vert5);
-
-    for(var i = 270; i >= 180; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.05 - 0.61 + 1.07,
-        Math.cos(j) * 0.08 - 0.27,
-      ]
-    
-      var vert2 = [
-        Math.sin(j) * 0.05 - 0.61 + 1.07,
-        Math.cos(j) * 0.08 - 0.27,
-      ]
-
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    var vert6 = [
-      -0.5 + 1.07, -0.35
-    ]
-
-    vertices = vertices.concat(vert6);
-
-    for(var i = 180; i >= 0; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.05 - 0.5 + 1.07,
-        Math.cos(j) * 0.05 - 0.3,
-      ]
-
-      var vert2 = [
-        Math.sin(j) * 0.05 - 0.5 + 1.07,
-        Math.cos(j) * 0.05 - 0.3,
-      ]
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    var vert3 = [
-      -0.6 + 1.07, -0.25,
-      -0.6 + 1.07, -0.11,
-    ]
-
-    vertices = vertices.concat(vert3);
-
-    var vert4 = [
-      -0.6 + 1.07, -0.01
-    ]
-
-    vertices = vertices.concat(vert4);
-    for(var i = 90; i >= -90; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.03 - 0.63 + 1.07,
-        Math.cos(j) * 0.04 + 0.08,
-      ]
-    
-      var vert2 = [
-        Math.sin(j) * 0.03 - 0.63 + 1.07,
-        Math.cos(j) * 0.04 + 0.08,
-      ]
-
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    
-    var n = vertices.length / vertCount;
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-    var aPosition = gl.getAttribLocation(program, 'aPosition');
-    if(aPosition < 0) {
-      console.log('Gagal mendapatkan lokasi storage dari aPosition');
-      return -1;
-    }
-
-    gl.vertexAttribPointer(aPosition, vertCount, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aPosition);
-
-    return n;
-  }
-
-  function initBuffers() {
-    var vertices = [];
-    var vertCount = 2;
-    var vertexBuffer = gl.createBuffer();
-    if(!vertexBuffer) {
-      console.log('Gagal membuat objek buffer');
-      return -1;
-    }
-
-    for(var i = 180; i >= 0; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.05 - 0.5 + 0.07,
-        Math.cos(j) * 0.05 - 0.3,
-      ]
-
-      var vert2 = [
-        Math.sin(j) * 0.05 - 0.5 + 0.07,
-        Math.cos(j) * 0.05 - 0.3,
-      ]
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    var vert3 = [
-      -0.6 + 0.07, -0.25,
-      -0.6 + 0.07, -0.11,
-    ]
-
-    vertices = vertices.concat(vert3);
-
-    for(var i = 180; i >= 0; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.05 - 0.5 + 0.07,
-        Math.cos(j) * 0.05 - 0.06,
-      ]
-
-      var vert2 = [
-        Math.sin(j) * 0.05 - 0.5 + 0.07,
-        Math.cos(j) * 0.05 - 0.06,
-      ]
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    var vert4 = [
-      -0.6 + 0.07, -0.01
-    ]
-
-    vertices = vertices.concat(vert4);
-    for(var i = 90; i >= -90; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.03 - 0.63 + 0.07,
-        Math.cos(j) * 0.04 + 0.08,
-      ]
-    
-      var vert2 = [
-        Math.sin(j) * 0.03 - 0.63 + 0.07,
-        Math.cos(j) * 0.04 + 0.08,
-      ]
-
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    var vert5 = [
-      -0.66 + 0.07, -0.27
-    ]
-
-    vertices = vertices.concat(vert5);
-
-    for(var i = 270; i >= 180; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.05 - 0.61 + 0.07,
-        Math.cos(j) * 0.08 - 0.27,
-      ]
-    
-      var vert2 = [
-        Math.sin(j) * 0.05 - 0.61 + 0.07,
-        Math.cos(j) * 0.08 - 0.27,
-      ]
-
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-
-    var vert6 = [
-      -0.5 + 0.07, -0.35
-    ]
-
-    vertices = vertices.concat(vert6);
-    var n = vertices.length / vertCount;
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-    var aPosition = gl.getAttribLocation(program, 'aPosition');
-    if(aPosition < 0) {
-      console.log('Gagal mendapatkan lokasi storage dari aPosition');
-      return -1;
-    }
-
-    gl.vertexAttribPointer(aPosition, vertCount, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aPosition);
-
-    return n;
-  }
-
-  function initBuffers3() {
-    var vertices = [];
-    var vertCount = 2;
-    var vertexBuffer = gl.createBuffer();
-    if(!vertexBuffer) {
-      console.log('Gagal membuat objek buffer');
-      return -1;
-    }
-
-    for(var i = 180; i >= 0; i-=1) {
-      var j = i * Math.PI / 180;
-      var vert1 = [
-        Math.sin(j) * 0.05 - 0.5 + 1.07,
-        Math.cos(j) * 0.05 - 0.06,
-      ]
-
-      var vert2 = [
-        Math.sin(j) * 0.05 - 0.5 + 1.07,
-        Math.cos(j) * 0.05 - 0.06,
-      ]
-      vertices = vertices.concat(vert2);
-      vertices = vertices.concat(vert1);
-
-    }
-    
-    var vert3 = [
-      -0.5 + 0.91, -0.01,
-      -0.5 + 0.91, -0.11
-    ]
-    vertices = vertices.concat(vert3);
-
-    var n5 = vertices.length / vertCount;
-    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-    var aPosition = gl.getAttribLocation(program, 'aPosition');
-    if(aPosition < 0) {
-      console.log('Gagal mendapatkan lokasi storage dari aPosition');
-      return -1;
-    }
-
-    gl.vertexAttribPointer(aPosition, vertCount, gl.FLOAT, false, 0, 0);
-    gl.enableVertexAttribArray(aPosition);
-
-    return n5;
-  }
   
-  function resizer() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
-    draw();
+          thetaA[1] += 0.103;
+          gl.uniform3fv(thetaLoc, thetaA);
+
+          gl.enableVertexAttribArray(vPosition);
+        gl.enableVertexAttribArray(vColor);
+          
+      }
+
+      resizer();
+      render();
   }
+    function resizer() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+      gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
+    }
   
-})(window || this);
+  })(window || this);
